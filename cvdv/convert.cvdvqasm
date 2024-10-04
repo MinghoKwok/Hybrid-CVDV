@@ -1,0 +1,7 @@
+qbreg qbr[16];
+creg cr[2];
+qmreg qmr[8];
+bsCV 6.283185307179586, 0, qmr[0], qmr[1];
+rCV -1.5707963267948966, qmr[0];
+rCV -1.5707963267948966, qmr[2];
+measure qbr[0], cr[0];

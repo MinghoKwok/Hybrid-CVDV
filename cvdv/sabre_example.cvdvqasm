@@ -1,0 +1,10 @@
+bsCV pi/4, 0, qmr[1], qmr[2]; // bsCV qm1, qm2
+SWAP 2pi, -0.5pi, qmr[0], qmr[1]; // SWAP qm0, qm1
+bsCV pi/4, 0, qmr[0], qmr[3]; // bsCV qm1, qm3
+SWAP 2pi, -0.5pi, qmr[0], qmr[1]; // SWAP qm1, qm0
+bsCV pi/4, 0, qmr[1], qmr[4]; // bsCV qm1, qm4
+SWAP 2pi, -0.5pi, qmr[3], qmr[6]; // SWAP qm3, qm6
+SWAP 2pi, -0.5pi, qmr[3], qmr[4]; // SWAP qm6, qm4
+bsCV pi/4, 0, qmr[5], qmr[4]; // bsCV qm5, qm6
+SWAP 2pi, -0.5pi, qmr[3], qmr[4]; // SWAP qm4, qm6
+bsCV pi/4, 0, qmr[5], qmr[4]; // bsCV qm5, qm4
