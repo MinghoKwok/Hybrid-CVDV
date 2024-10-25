@@ -164,6 +164,7 @@ def draw_dag(G, qumode_depth, gate_depth, fig_name="grid_dag.png"):
 
     # Save the graph to a file
     plt.savefig(fig_name)
+    plt.close()
 
 
 

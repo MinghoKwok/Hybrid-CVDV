@@ -9,8 +9,8 @@ import parser_cvdvqasm
 import pdb
 import heapq
 import math
-
-
+import json
+import pickle
 
 
 
@@ -48,56 +48,6 @@ coupling_graph = CVCouplingMap()
 '''
 
 """    
-
-# Generate Coupling Graph
-## linked_qubits means whether virtual links between qubits are needed (for superconducting)
-def gen_coupling_graph(qc_type = "superconducting", m_qubits = 3, m_qumodes = 3, linked_qubits = True):  # N = m * m
-
-    # Construct Superconducting coupling map
-    cv_map = CVCouplingMap(description = f"3*3 superconducting coupling map")
-
-    if qc_type == "superconducting":
-        if m_qubits != m_qumodes:
-            raise ValueError("In superconducting architecture, the number of qubits should be equale to the number of qumodes")
-
-        ## Add qubits and qumode
-        m = m_qubits # N = m * m
-        N = m * m # number of qubits = number of qumodes
-        for i in range(0, N):
-            cv_map.add_physical_qumode(i)
-        for i in range(N, N * 2):
-            cv_map.add_physical_qubit(i)
-
-        ## Connnect qumodes/qubits
-        for i in range(0, m): # connect rows
-            pos = i * m
-            cv_map.add_edge(pos, pos + 1, edge_type="qumode-qumode", weight=1, cost=1)
-            cv_map.add_edge(pos + 1, pos + 2, edge_type="qumode-qumode", weight=1, cost=1)
-            if linked_qubits:
-                cv_map.add_edge(pos + N, pos + 1 + N, edge_type="qubit-qubit", weight=1, cost=9)        # Virtual Link
-                cv_map.add_edge(pos + 1 + N, pos + 2 + N, edge_type="qubit-qubit", weight=1, cost=9)    # Virtual Link
-        for j in range(0, m): # connect columns
-            pos = j
-            cv_map.add_edge(pos, pos + m, edge_type="qumode-qumode", weight=1, cost=1)
-            cv_map.add_edge(pos + m, pos + m * 2, edge_type="qumode-qumode", weight=1, cost=1) 
-            if linked_qubits:   
-                cv_map.add_edge(pos + N, pos + m + N, edge_type="qubit-qubit", weight=1, cost=9)  
-                cv_map.add_edge(pos + m + N, pos + m * 2 + N, edge_type="qubit-qubit", weight=1, cost=9)
-
-        ## Connect qumodes and qubits
-        for i in range(0, N):
-            cv_map.add_edge(i, i + N, edge_type="qumode-qubit", weight=1, cost=2)
-
-
-    # print(f"Distance bwtween qubit 0 and qubit 3: {cv_map.distance(0, 3)}")
-
-    # Visualize the coupling map
-    image = cv_map.draw()
-    # print(cv_map.distance(8, 9))
-    # image.show()  # Display the image
-    image.save('cv_map_superconducting.png')
-
-    return cv_map
 
 
 
@@ -472,10 +422,11 @@ def swap_sabre(dag_input: nx.DiGraph, coupling_graph: CVCouplingMap, mapping_log
             swap_instr.append('SWAP')
             swap_instr.append('2pi')
             swap_instr.append('-0.5pi')
-            swap_instr.append(phy_q_swap_0)     # physical qumodes
+            swap_instr.append(phy_q_swap_0)     # physical qumodes/qubits
             swap_instr.append(phy_q_swap_1)
-            swap_instr.append(mapping_phy_to_log[phy_q_swap_0])     # logical qumodes
+            swap_instr.append(mapping_phy_to_log[phy_q_swap_0])     # logical qumodes/qubits
             swap_instr.append(mapping_phy_to_log[phy_q_swap_1])
+            # For If SWAP two qubits
             final_gate_list.append(swap_instr)
             ## Update Mapping
             temp_log_q_swap_0 = mapping_phy_to_log[phy_q_swap_0]
@@ -525,23 +476,30 @@ def gen_test_dag():
     return G, qumode_depth, gate_depth
 
 
-# # Initialization
-# ## INPUT
-# coupling_graph = gen_coupling_graph()                       # Coupling Graph
-# distance_matrix = gen_distance_matrix(coupling_graph)       # Distance Matrix
-# # print(f"dis:{distance_matrix[6][5]}")
-# mapping_log_to_phy, mapping_phy_to_log = gen_ini_map(9, 9)    # Initial Mapping
-# cir_dag_input, qumode_depth, gate_depth = gen_test_dag()
-# gate_latency = {"BS": 1, "SWAP": 1}
-# # cir_dag_output = swap_alg_baseline(cir_dag_input, coupling_graph, mapping_log_to_phy, mapping_phy_to_log)
-# # dag.draw_dag(cir_dag_output, qumode_depth, gate_depth, "DAG_after_swaps")
+# Initialization
+## INPUT
+
+### Coupling Graph
+with open("../input/cv_map_superconducting_3*3_linked-qubits-True.pkl", 'rb') as file:
+    coupling_graph = pickle.load(file)
+
+distance_matrix = gen_distance_matrix(coupling_graph)       # Distance Matrix
+# print(f"dis:{distance_matrix[6][5]}")
+mapping_log_to_phy, mapping_phy_to_log = gen_ini_map(9, 9)    # Initial Mapping
+cir_dag_input, qumode_depth, gate_depth = gen_test_dag()
+
+### Gate Latency
+with open('../input/gate_latency.json', 'r') as file:
+    gate_latency = json.load(file)
+# cir_dag_output = swap_alg_baseline(cir_dag_input, coupling_graph, mapping_log_to_phy, mapping_phy_to_log)
+# dag.draw_dag(cir_dag_output, qumode_depth, gate_depth, "DAG_after_swaps")
 
 
 
-# # cir_dag_output, ini_mapping = run()
+# cir_dag_output, ini_mapping = run()
 
 
-# _, cir_duration = swap_sabre(cir_dag_input, coupling_graph, mapping_log_to_phy, mapping_phy_to_log, gate_latency, "decay")
-# print(f"Circuit Duration: {cir_duration}")
+_, cir_duration = swap_sabre(cir_dag_input, coupling_graph, mapping_log_to_phy, mapping_phy_to_log, gate_latency, "decay")
+print(f"Circuit Duration: {cir_duration}")
 
 parser_cvdvqasm.cvdvqasm_to_dag("sabre_example.cvdvqasm", "physical_dag.png")

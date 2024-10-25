@@ -236,37 +236,41 @@ def cvdvqasm_to_dag(filename: str, fig_name: str):
 
     with open(filename, 'r') as fp:
         for line in fp:
-            comment_index = line.find(r"//")
+            comment_index = line.find("//")  # Find the start of any comment
             if comment_index != -1:
-                line = line[:comment_index]
+                line = line[:comment_index]  # Remove the comment part
             
             if line.strip() == "":
-                continue
+                continue  # Ignore empty lines
 
             command, args_str = line.strip().strip(";").split(" ", 1)
             args = [arg.strip() for arg in args_str.split(',')]
-            qus = []    # qumodes or qubits used
+            qus = []  # qumodes or qubits used
 
-            print("\ncommand: " + command)
-            print("args_str: " + args_str)
-            if command == 'SWAP':
+            # Parse different commands
+            if command == 'SWAP' or command == 'bsCV':
                 qus.append(args[2])
                 qus.append(args[3])
-            elif command == 'bsCV':
-                qus.append(args[2])
-                qus.append(args[3])
+
             G.add_node(node_index, gate_type=command, qus=qus)
             for qu in qus:
                 if qu in cur_G:
-                    G.add_edge(cur_G[qu], node_index)    # Add dependence
+                    G.add_edge(cur_G[qu], node_index)  # Add dependence edge
                 cur_G[qu] = node_index
 
-            node_index += 1     # Update next node index
-    
-    nx.draw(G)
+            node_index += 1
+
+    # Generate positions for each node for visualization
+    pos = nx.spring_layout(G)  # positions for all nodes
+
+    # Draw the nodes and labels
+    nx.draw(G, pos, node_color='skyblue', node_size=3000, with_labels=False)
+    labels = {node: f"{node}\n{data.get('gate_type', '')}\n{', '.join(data.get('qus', []))}" for node, data in G.nodes(data=True)}
+    nx.draw_networkx_labels(G, pos, labels=labels, font_size=8)
+
     # Save the graph to a file
     plt.savefig(fig_name)
-
+    plt.close()  # Close the plot to free up resources
 
 '''
 # read_qasm("swap_example.cvdvqasm")
