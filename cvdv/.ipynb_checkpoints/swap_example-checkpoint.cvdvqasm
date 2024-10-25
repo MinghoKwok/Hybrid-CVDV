@@ -1,8 +1,0 @@
-qbreg qbr[2];
-creg cr[2];
-qmreg qmr[8];
-bsCV pi/4, 0, qmr[0], qmr[1];
-rCV pi/2, qmr[0];
-rCV pi/2, qmr[1];
-measure qbr[0], cr[0];
-cdHybrid qmr[0], qbr[1];
